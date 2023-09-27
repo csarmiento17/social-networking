@@ -8,9 +8,10 @@ function App() {
 
   useEffect(() => {
     axios.get('http://localhost:5000/api/activities').then((response) => {
+      console.log(response.data);
       setActivities(response.data);
     });
-  }, [activities]);
+  }, []);
   return (
     <div>
       <Header as="h2" icon="users" content="Reactivities" />
