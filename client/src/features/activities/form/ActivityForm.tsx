@@ -1,14 +1,21 @@
 import { Button, Form, Segment } from 'semantic-ui-react';
 import { Activity } from '../../../app/models/activity';
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { useStore } from '../../../app/stores/store';
 import { observer } from 'mobx-react-lite';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import Loading from '../../../app/layout/Loading';
+import { v4 as uuid } from 'uuid';
 
 export default observer(function ActivityForm() {
   const { activityStore } = useStore();
-  const { selectedActivity, addActivity, updateActivity, closeForm, loading } =
+  const { addActivity, updateActivity, loading, loadingInitial, loadActivity } =
     activityStore;
-  const initialState = selectedActivity ?? {
+
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [activity, setActivity] = useState<Activity>({
     id: '',
     title: '',
     category: '',
@@ -16,12 +23,21 @@ export default observer(function ActivityForm() {
     date: '',
     city: '',
     venue: '',
-  };
+  });
 
-  const [activity, setActivity] = useState(initialState);
+  useEffect(() => {
+    if (id) loadActivity(id).then((activity) => setActivity(activity!));
+  }, [id, loadActivity]);
 
   function handleSubmit() {
-    activity.id ? updateActivity(activity) : addActivity(activity);
+    if (!activity.id) {
+      activity.id = uuid();
+      addActivity(activity).then(() => navigate(`/activities/${activity.id}`));
+    } else {
+      updateActivity(activity).then(() =>
+        navigate(`/activities/${activity.id}`)
+      );
+    }
   }
 
   function handleInputChange(
@@ -31,6 +47,7 @@ export default observer(function ActivityForm() {
     setActivity({ ...activity, [name]: value });
   }
 
+  if (loadingInitial) return <Loading content="Fetching event..." />;
   return (
     <Segment clearing>
       <Form onSubmit={handleSubmit} autoComplete="off">
@@ -79,7 +96,9 @@ export default observer(function ActivityForm() {
           content="Submit"
         />
         <Button
-          onClick={closeForm}
+          //onClick={closeForm}
+          as={Link}
+          to="/activities"
           floated="right"
           type="button"
           content="Cancel"
@@ -88,3 +107,7 @@ export default observer(function ActivityForm() {
     </Segment>
   );
 });
+
+// function uuid(): string {
+//   throw new Error('Function not implemented.');
+// }
